@@ -1,0 +1,46 @@
+from typing import Optional
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+# Initialize the web application
+app = FastAPI(
+    title="Sample Web Application",
+    description="A foundational REST API boilerplate",
+    version="1.0.0"
+)
+
+# Define a data model using Pydantic for request validation
+class Item(BaseModel):
+    name: str
+    description: Optional[str] = None
+    price: float
+    tax: Optional[float] = None
+
+# In-memory database simulation
+database = {}
+
+@app.get("/")
+def read_root():
+    """Health check route."""
+    return {"status": "healthy", "message": "Welcome to the Sample Application API"}
+
+@app.post("/items/{item_id}", status_code=201)
+def create_item(item_id: int, item: Item):
+    """Create and store a new item in the database."""
+    if item_id in database:
+        raise HTTPException(status_code=400, detail="Item already exists")
+    
+    database[item_id] = item.dict()
+    return {"message": "Item successfully created", "data": database[item_id]}
+
+@app.get("/items/{item_id}")
+def read_item(item_id: int):
+    """Retrieve an item by its unique ID."""
+    if item_id not in database:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return database[item_id]
+
+# To run this application:
+# 1. Install dependencies: pip install fastapi uvicorn pydantic
+# 2. Start the server: uvicorn main:app --reload
+
